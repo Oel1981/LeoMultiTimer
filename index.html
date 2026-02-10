@@ -127,6 +127,7 @@
             border-bottom: 2px solid transparent;
             width: 120px;
             flex-shrink: 0;
+            transition: color 0.3s ease;
         }
 
         .timer-name:focus {
@@ -253,17 +254,163 @@
             font-variant-numeric: tabular-nums;
             color: #e0e0e0;
             text-shadow: 0 0 20px rgba(217, 93, 57, 0.3);
+            transition: color 0.3s ease;
+        }
+
+        .timer-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px 0;
+        }
+
+        .timer-target {
+            font-size: 18px;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .timer-overage {
+            font-size: 18px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 4px;
+            background: rgba(255, 51, 51, 0.2);
+            color: #ff6666;
+        }
+
+        .timer-progress {
+            font-size: 18px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 4px;
+            background: rgba(51, 204, 51, 0.2);
+            color: #66ff66;
         }
 
         .timer-display.negative {
+            color: #ffffff !important;
+            text-shadow: 0 0 30px rgba(255, 51, 51, 0.8);
+        }
+
+        .timer-display.warning-30 {
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .timer-display.warning-10 {
+            color: #ff8c00;
+            text-shadow: 0 0 20px rgba(255, 140, 0, 0.6);
+        }
+
+        .timer-display.warning-5 {
             color: #ff3333;
-            text-shadow: 0 0 20px rgba(255, 51, 51, 0.5);
+            text-shadow: 0 0 20px rgba(255, 51, 51, 0.7);
+        }
+
+        .timer-card.negative {
+            background: #4d0000 !important;
+            border-left-color: #ff0000 !important;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
         }
 
         .timer-controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
+        }
+
+        .timer-controls .start, 
+        .timer-controls .pause {
+            grid-column: 1 / -1;
+        }
+
+        .color-picker-wrapper {
+            position: relative;
+        }
+
+        .color-picker-btn {
+            background: #444;
+            border: none;
+            color: #e0e0e0;
+            padding: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .color-picker-btn:active {
+            background: #555;
+            transform: scale(0.98);
+        }
+
+        .color-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            border: 2px solid #666;
+            display: inline-block;
+        }
+
+        .color-palette {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .color-palette.active {
+            display: block;
+        }
+
+        .color-palette-title {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .color-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            touch-action: manipulation;
+        }
+
+        .color-option:active {
+            transform: scale(0.9);
+        }
+
+        .color-option.selected {
+            box-shadow: 0 0 0 3px #d95d39, 0 0 10px rgba(217, 93, 57, 0.5);
+            transform: scale(1.1);
         }
 
         .control-btn {
@@ -308,6 +455,158 @@
             background: #777;
         }
 
+        .total-overage-btn {
+            background: #8b4513;
+            border: none;
+            color: #e0e0e0;
+            padding: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            touch-action: manipulation;
+            grid-column: 1 / -1;
+            margin-top: 5px;
+        }
+
+        .total-overage-btn:active {
+            background: #a0522d;
+            transform: scale(0.98);
+        }
+
+        .overage-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .overage-modal.active {
+            display: flex;
+        }
+
+        .overage-modal-content {
+            background: #252525;
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 2px solid #d95d39;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .overage-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #333;
+        }
+
+        .overage-modal-title {
+            color: #d95d39;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .overage-modal-close {
+            background: #662222;
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .overage-modal-close:active {
+            background: #883333;
+        }
+
+        .overage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+
+        .overage-item-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .overage-item-time {
+            font-size: 18px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .overage-item.countdown {
+            border-left-color: #ff3333;
+        }
+
+        .overage-item.countdown .overage-item-time {
+            color: #ff6666;
+        }
+
+        .overage-item.countup {
+            border-left-color: #33cc33;
+        }
+
+        .overage-item.countup .overage-item-time {
+            color: #66ff66;
+        }
+
+        .overage-total {
+            margin-top: 20px;
+            padding: 20px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            border: 2px solid #d95d39;
+            text-align: center;
+        }
+
+        .overage-total-label {
+            color: #999;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .overage-total-time {
+            font-size: 32px;
+            font-weight: 700;
+            color: #d95d39;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .overage-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-size: 16px;
+        }
+
         @media (max-width: 480px) {
             .timer-display {
                 font-size: 48px;
@@ -349,6 +648,17 @@
         <div class="timers-container" id="timersContainer"></div>
     </div>
 
+    <!-- Overage Modal -->
+    <div class="overage-modal" id="overageModal">
+        <div class="overage-modal-content">
+            <div class="overage-modal-header">
+                <div class="overage-modal-title">📊 Riepilogo Sforamenti</div>
+                <button class="overage-modal-close" id="closeOverageModal">✕</button>
+            </div>
+            <div id="overageList"></div>
+        </div>
+    </div>
+
     <script>
         'use strict';
         
@@ -364,6 +674,7 @@
                 this.targetTime = 300;
                 this.isRunning = false;
                 this.interval = null;
+                this.color = '#4a4a4a'; // Default gray
             }
 
             start() {
@@ -425,6 +736,35 @@
                 return sign + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
             }
 
+            formatOverage() {
+                // For countdown: show how much over time
+                if (this.mode === 'countdown' && this.currentTime < 0) {
+                    var absTime = Math.abs(this.currentTime);
+                    var mins = Math.floor(absTime / 60);
+                    var secs = absTime % 60;
+                    return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+                }
+                return null;
+            }
+
+            formatProgress() {
+                // For countup: show progress after reaching target
+                if (this.mode === 'countup' && this.currentTime >= this.targetTime && this.targetTime > 0) {
+                    var overage = this.currentTime - this.targetTime;
+                    var mins = Math.floor(overage / 60);
+                    var secs = overage % 60;
+                    return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+                }
+                return null;
+            }
+
+            getTargetDisplay() {
+                if (this.targetTime === 0) return null;
+                var mins = Math.floor(this.targetTime / 60);
+                var secs = this.targetTime % 60;
+                return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+            }
+
             isNegative() {
                 return this.mode === 'countdown' && this.currentTime < 0;
             }
@@ -436,15 +776,52 @@
                 var display = card.querySelector('.timer-display');
                 var startBtn = card.querySelector('.start-btn');
                 var pauseBtn = card.querySelector('.pause-btn');
+                var timerName = card.querySelector('.timer-name');
+                var timerInfo = card.querySelector('.timer-info');
 
                 display.textContent = this.formatTime();
                 
+                // Color the timer name
+                timerName.style.color = this.color;
+                
+                // Update info display (target/overage/progress)
+                var targetDisplay = this.getTargetDisplay();
+                var overageDisplay = this.formatOverage();
+                var progressDisplay = this.formatProgress();
+                
+                var infoHTML = '';
+                if (targetDisplay) {
+                    infoHTML += '<span class="timer-target">Target: ' + targetDisplay + '</span>';
+                }
+                if (overageDisplay) {
+                    infoHTML += '<span class="timer-overage">Sforato: ' + overageDisplay + '</span>';
+                }
+                if (progressDisplay) {
+                    infoHTML += '<span class="timer-progress">Oltre: ' + progressDisplay + '</span>';
+                }
+                timerInfo.innerHTML = infoHTML;
+                
+                // Remove all warning classes first
+                display.classList.remove('negative', 'warning-30', 'warning-10', 'warning-5');
+                card.classList.remove('negative');
+                
+                // Apply color warnings based on time remaining
                 if (this.isNegative()) {
                     display.classList.add('negative');
                     card.classList.add('negative');
-                } else {
-                    display.classList.remove('negative');
-                    card.classList.remove('negative');
+                } else if (this.mode === 'countdown' && this.isRunning) {
+                    if (this.currentTime <= 5 && this.currentTime > 0) {
+                        display.classList.add('warning-5');
+                    } else if (this.currentTime <= 10 && this.currentTime > 5) {
+                        display.classList.add('warning-10');
+                    } else if (this.currentTime <= 30 && this.currentTime > 10) {
+                        display.classList.add('warning-30');
+                    }
+                }
+
+                // Update card border color (but not when negative)
+                if (!this.isNegative()) {
+                    card.style.borderLeftColor = this.color;
                 }
 
                 if (this.isRunning) {
@@ -480,6 +857,17 @@
                 document.getElementById('loadBtn').addEventListener('click', function() {
                     self.loadConfiguration();
                 });
+
+                document.getElementById('closeOverageModal').addEventListener('click', function() {
+                    document.getElementById('overageModal').classList.remove('active');
+                });
+
+                // Close modal when clicking outside
+                document.getElementById('overageModal').addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('active');
+                    }
+                });
                 
                 // Try to load saved state
                 this.loadFromLocalStorage();
@@ -488,6 +876,75 @@
                 if (this.timers.length === 0) {
                     this.addTimer();
                 }
+            },
+
+            showTotalOverage: function() {
+                var overages = [];
+                var totalSeconds = 0;
+
+                for (var i = 0; i < this.timers.length; i++) {
+                    var timer = this.timers[i];
+                    var overageSeconds = 0;
+                    var type = '';
+
+                    if (timer.mode === 'countdown' && timer.currentTime < 0) {
+                        overageSeconds = Math.abs(timer.currentTime);
+                        type = 'countdown';
+                    } else if (timer.mode === 'countup' && timer.currentTime >= timer.targetTime && timer.targetTime > 0) {
+                        overageSeconds = timer.currentTime - timer.targetTime;
+                        type = 'countup';
+                    }
+
+                    if (overageSeconds > 0) {
+                        overages.push({
+                            name: timer.name,
+                            title: timer.title,
+                            seconds: overageSeconds,
+                            type: type,
+                            color: timer.color
+                        });
+                        totalSeconds += overageSeconds;
+                    }
+                }
+
+                var listHTML = '';
+                
+                if (overages.length === 0) {
+                    listHTML = '<div class="overage-empty">✓ Nessun timer fuori tempo</div>';
+                } else {
+                    for (var i = 0; i < overages.length; i++) {
+                        var overage = overages[i];
+                        var mins = Math.floor(overage.seconds / 60);
+                        var secs = overage.seconds % 60;
+                        var timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+                        var label = overage.type === 'countdown' ? 'Sforato' : 'Oltre';
+                        
+                        listHTML += '<div class="overage-item ' + overage.type + '" style="border-left-color: ' + overage.color + '">';
+                        listHTML += '  <div>';
+                        listHTML += '    <div class="overage-item-name" style="color: ' + overage.color + '">' + overage.name + '</div>';
+                        if (overage.title) {
+                            listHTML += '    <div style="color: #666; font-size: 12px;">' + overage.title + '</div>';
+                        }
+                        listHTML += '  </div>';
+                        listHTML += '  <div>';
+                        listHTML += '    <div style="color: #888; font-size: 11px; text-align: right;">' + label + '</div>';
+                        listHTML += '    <div class="overage-item-time">' + timeStr + '</div>';
+                        listHTML += '  </div>';
+                        listHTML += '</div>';
+                    }
+
+                    var totalMins = Math.floor(totalSeconds / 60);
+                    var totalSecs = totalSeconds % 60;
+                    var totalStr = String(totalMins).padStart(2, '0') + ':' + String(totalSecs).padStart(2, '0');
+
+                    listHTML += '<div class="overage-total">';
+                    listHTML += '  <div class="overage-total-label">Totale Sforamenti</div>';
+                    listHTML += '  <div class="overage-total-time">' + totalStr + '</div>';
+                    listHTML += '</div>';
+                }
+
+                document.getElementById('overageList').innerHTML = listHTML;
+                document.getElementById('overageModal').classList.add('active');
             },
 
             saveToLocalStorage: function() {
@@ -499,7 +956,8 @@
                             mode: timer.mode,
                             minutes: timer.minutes,
                             seconds: timer.seconds,
-                            targetTime: timer.targetTime
+                            targetTime: timer.targetTime,
+                            color: timer.color
                         };
                     }),
                     timerId: this.timerId
@@ -529,6 +987,7 @@
                         timer.minutes = savedTimer.minutes || 5;
                         timer.seconds = savedTimer.seconds || 0;
                         timer.targetTime = savedTimer.targetTime || 300;
+                        timer.color = savedTimer.color || '#4a4a4a';
                         
                         this.timers.push(timer);
                         this.renderTimer(timer);
@@ -562,7 +1021,8 @@
                             mode: timer.mode,
                             minutes: timer.minutes,
                             seconds: timer.seconds,
-                            targetTime: timer.targetTime
+                            targetTime: timer.targetTime,
+                            color: timer.color
                         };
                     })
                 };
@@ -629,6 +1089,7 @@
                     timer.minutes = savedTimer.minutes || 5;
                     timer.seconds = savedTimer.seconds || 0;
                     timer.targetTime = savedTimer.targetTime || 300;
+                    timer.color = savedTimer.color || '#4a4a4a';
                     
                     this.timers.push(timer);
                 }
@@ -654,6 +1115,7 @@
                 newTimer.minutes = timer.minutes;
                 newTimer.seconds = timer.seconds;
                 newTimer.targetTime = timer.targetTime;
+                newTimer.color = timer.color;
                 
                 var index = this.timers.indexOf(timer);
                 this.timers.splice(index + 1, 0, newTimer);
@@ -713,10 +1175,56 @@
                         '</div>' +
                     '</div>' +
                     '<div class="timer-display">' + timer.formatTime() + '</div>' +
+                    '<div class="timer-info"></div>' +
                     '<div class="timer-controls">' +
                         '<button class="control-btn start start-btn">▶ Start</button>' +
                         '<button class="control-btn pause pause-btn" style="display: none;">⏸ Pausa</button>' +
                         '<button class="control-btn reset reset-btn">⟲ Reset</button>' +
+                        '<div class="color-picker-wrapper">' +
+                            '<button class="color-picker-btn">' +
+                                '<span class="color-preview" style="background-color: ' + timer.color + '"></span>' +
+                                '🎨' +
+                            '</button>' +
+                            '<div class="color-palette">' +
+                                '<div class="color-palette-title">Palette DaVinci</div>' +
+                                '<div class="color-grid">' +
+                                    '<button class="color-option" style="background: #d95d39" data-color="#d95d39"></button>' +
+                                    '<button class="color-option" style="background: #e76f51" data-color="#e76f51"></button>' +
+                                    '<button class="color-option" style="background: #f4a261" data-color="#f4a261"></button>' +
+                                    '<button class="color-option" style="background: #e9c46a" data-color="#e9c46a"></button>' +
+                                    '<button class="color-option" style="background: #2a9d8f" data-color="#2a9d8f"></button>' +
+                                    '<button class="color-option" style="background: #264653" data-color="#264653"></button>' +
+                                '</div>' +
+                                '<div class="color-palette-title">Neutri</div>' +
+                                '<div class="color-grid">' +
+                                    '<button class="color-option" style="background: #4a4a4a" data-color="#4a4a4a"></button>' +
+                                    '<button class="color-option" style="background: #6b6b6b" data-color="#6b6b6b"></button>' +
+                                    '<button class="color-option" style="background: #8c8c8c" data-color="#8c8c8c"></button>' +
+                                    '<button class="color-option" style="background: #2d2d2d" data-color="#2d2d2d"></button>' +
+                                    '<button class="color-option" style="background: #1a1a1a" data-color="#1a1a1a"></button>' +
+                                    '<button class="color-option" style="background: #0d0d0d" data-color="#0d0d0d"></button>' +
+                                '</div>' +
+                                '<div class="color-palette-title">Broadcast</div>' +
+                                '<div class="color-grid">' +
+                                    '<button class="color-option" style="background: #ff3333" data-color="#ff3333"></button>' +
+                                    '<button class="color-option" style="background: #3366ff" data-color="#3366ff"></button>' +
+                                    '<button class="color-option" style="background: #33cc33" data-color="#33cc33"></button>' +
+                                    '<button class="color-option" style="background: #ffcc00" data-color="#ffcc00"></button>' +
+                                    '<button class="color-option" style="background: #ff66ff" data-color="#ff66ff"></button>' +
+                                    '<button class="color-option" style="background: #00cccc" data-color="#00cccc"></button>' +
+                                '</div>' +
+                                '<div class="color-palette-title">Studio</div>' +
+                                '<div class="color-grid">' +
+                                    '<button class="color-option" style="background: #8b4513" data-color="#8b4513"></button>' +
+                                    '<button class="color-option" style="background: #2e7d32" data-color="#2e7d32"></button>' +
+                                    '<button class="color-option" style="background: #1976d2" data-color="#1976d2"></button>' +
+                                    '<button class="color-option" style="background: #7b1fa2" data-color="#7b1fa2"></button>' +
+                                    '<button class="color-option" style="background: #c2185b" data-color="#c2185b"></button>' +
+                                    '<button class="color-option" style="background: #f57c00" data-color="#f57c00"></button>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="total-overage-btn total-overage-trigger">📊 Totale Sforamenti</button>' +
                     '</div>';
 
                 card.querySelector('.timer-name').addEventListener('input', function(e) {
@@ -779,6 +1287,68 @@
 
                 card.querySelector('.reset-btn').addEventListener('click', function() {
                     timer.reset();
+                });
+
+                // Color picker functionality
+                var colorPickerBtn = card.querySelector('.color-picker-btn');
+                var colorPalette = card.querySelector('.color-palette');
+                var colorOptions = card.querySelectorAll('.color-option');
+                var colorPreview = card.querySelector('.color-preview');
+
+                colorPickerBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    colorPalette.classList.toggle('active');
+                });
+
+                // Close palette when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!card.contains(e.target)) {
+                        colorPalette.classList.remove('active');
+                    }
+                });
+
+                // Color option selection
+                for (var j = 0; j < colorOptions.length; j++) {
+                    (function(option) {
+                        option.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            var color = this.getAttribute('data-color');
+                            timer.color = color;
+                            colorPreview.style.backgroundColor = color;
+                            card.style.borderLeftColor = color;
+                            
+                            // Update timer name color
+                            var timerName = card.querySelector('.timer-name');
+                            timerName.style.color = color;
+                            
+                            // Update selected state
+                            for (var k = 0; k < colorOptions.length; k++) {
+                                colorOptions[k].classList.remove('selected');
+                            }
+                            this.classList.add('selected');
+                            
+                            colorPalette.classList.remove('active');
+                            self.saveToLocalStorage();
+                        });
+                    })(colorOptions[j]);
+                }
+
+                // Set initial selected color
+                for (var j = 0; j < colorOptions.length; j++) {
+                    if (colorOptions[j].getAttribute('data-color') === timer.color) {
+                        colorOptions[j].classList.add('selected');
+                    }
+                }
+
+                // Set initial border color and name color
+                card.style.borderLeftColor = timer.color;
+                var timerName = card.querySelector('.timer-name');
+                timerName.style.color = timer.color;
+
+                // Total overage button
+                var totalOverageBtn = card.querySelector('.total-overage-trigger');
+                totalOverageBtn.addEventListener('click', function() {
+                    self.showTotalOverage();
                 });
 
                 container.appendChild(card);
