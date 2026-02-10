@@ -885,7 +885,10 @@
                 // Try to load saved state
                 this.loadFromLocalStorage();
                 
-                // If no timers loaded, add one default
+                // Check if there's a config in the URL (shared link)
+                var loadedFromURL = this.loadConfigFromURL();
+                
+                // If no timers loaded from URL or localStorage, add one default
                 if (this.timers.length === 0) {
                     this.addTimer();
                 }
@@ -961,66 +964,130 @@
             },
 
             shareApp: function() {
-                var url = window.location.href;
-                var title = 'Multi Timer - DaVinci Style';
-                var text = 'Usa questa app timer professionale per i tuoi eventi!';
+                var self = this;
+                
+                // Create configuration data
+                var config = {
+                    timers: this.timers.map(function(timer) {
+                        return {
+                            name: timer.name,
+                            title: timer.title,
+                            mode: timer.mode,
+                            minutes: timer.minutes,
+                            seconds: timer.seconds,
+                            targetTime: timer.targetTime,
+                            color: timer.color
+                        };
+                    }),
+                    date: new Date().toISOString()
+                };
+
+                var configJSON = JSON.stringify(config);
+                var configEncoded = btoa(encodeURIComponent(configJSON));
+                
+                // Create shareable URL with configuration
+                var baseUrl = window.location.origin + window.location.pathname;
+                var shareUrl = baseUrl + '?config=' + configEncoded;
+                
+                var title = 'Multi Timer - Configurazione';
+                var text = 'Ho creato ' + this.timers.length + ' timer. Apri questo link per caricarli!';
 
                 // Check if Web Share API is supported (mobile devices)
                 if (navigator.share) {
                     navigator.share({
                         title: title,
                         text: text,
-                        url: url
+                        url: shareUrl
                     }).then(function() {
                         console.log('Condivisione riuscita');
                     }).catch(function(error) {
                         console.log('Condivisione annullata', error);
                     });
                 } 
-                // Fallback: copy to clipboard
+                // Fallback: copy to clipboard or download
                 else {
-                    var textToCopy = title + '\n' + text + '\n' + url;
-                    
-                    // Try modern clipboard API first
+                    // Try to copy URL to clipboard
                     if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(url).then(function() {
-                            alert('✅ Link copiato negli appunti!\n\n' + url + '\n\nIncollalo per condividere l\'app.');
+                        navigator.clipboard.writeText(shareUrl).then(function() {
+                            var msg = '✅ Link con configurazione copiato!\n\n';
+                            msg += 'Timer inclusi: ' + self.timers.length + '\n\n';
+                            msg += 'Invia il link a chi vuoi condividere i timer.';
+                            alert(msg);
                         }).catch(function(err) {
-                            // Fallback to old method
-                            fallbackCopyToClipboard(url);
+                            self.downloadConfig(config);
                         });
                     } else {
-                        fallbackCopyToClipboard(url);
-                    }
-                }
-
-                function fallbackCopyToClipboard(text) {
-                    var textArea = document.createElement('textarea');
-                    textArea.value = text;
-                    textArea.style.position = 'fixed';
-                    textArea.style.left = '-9999px';
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    
-                    try {
-                        var successful = document.execCommand('copy');
-                        if (successful) {
-                            alert('✅ Link copiato negli appunti!\n\n' + text + '\n\nIncollalo per condividere l\'app.');
+                        // Offer to download as JSON file
+                        var download = confirm('Vuoi scaricare la configurazione come file JSON?\n\n(Altrimenti ti verrà mostrato il link da copiare)');
+                        if (download) {
+                            self.downloadConfig(config);
                         } else {
-                            showManualCopy(text);
+                            prompt('Copia questo link per condividere i timer:', shareUrl);
                         }
-                    } catch (err) {
-                        showManualCopy(text);
                     }
-                    
-                    document.body.removeChild(textArea);
                 }
+            },
 
-                function showManualCopy(text) {
-                    var message = 'Copia questo link per condividere:\n\n' + text;
-                    prompt(message, text);
+            downloadConfig: function(config) {
+                var configJSON = JSON.stringify(config, null, 2);
+                var blob = new Blob([configJSON], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'timer-config-' + new Date().toISOString().split('T')[0] + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert('✅ Configurazione scaricata!\n\nPuoi inviare il file JSON e chi lo riceve può caricarlo con "📂 Carica".');
+            },
+
+            loadConfigFromURL: function() {
+                var urlParams = new URLSearchParams(window.location.search);
+                var configParam = urlParams.get('config');
+                
+                if (configParam) {
+                    try {
+                        var configJSON = decodeURIComponent(atob(configParam));
+                        var config = JSON.parse(configJSON);
+                        
+                        // Clear current timers
+                        for (var i = 0; i < this.timers.length; i++) {
+                            this.timers[i].destroy();
+                        }
+                        this.timers = [];
+                        
+                        // Load timers from URL config
+                        for (var i = 0; i < config.timers.length; i++) {
+                            var savedTimer = config.timers[i];
+                            var timer = new Timer(this.timerId++);
+                            timer.name = savedTimer.name || timer.name;
+                            timer.title = savedTimer.title || '';
+                            timer.mode = savedTimer.mode || 'countdown';
+                            timer.minutes = savedTimer.minutes || 5;
+                            timer.seconds = savedTimer.seconds || 0;
+                            timer.targetTime = savedTimer.targetTime || 300;
+                            timer.color = savedTimer.color || '#4a4a4a';
+                            
+                            this.timers.push(timer);
+                        }
+                        
+                        this.renderAllTimers();
+                        this.saveToLocalStorage();
+                        
+                        // Clean URL (remove config parameter)
+                        var cleanUrl = window.location.origin + window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                        
+                        alert('✅ Configurazione caricata dal link!\n\n' + config.timers.length + ' timer importati.');
+                        
+                        return true;
+                    } catch (e) {
+                        console.error('Failed to load config from URL:', e);
+                        alert('❌ Errore nel caricamento della configurazione dal link.');
+                    }
                 }
+                return false;
             },
 
             saveToLocalStorage: function() {
@@ -1115,6 +1182,21 @@
 
             loadConfiguration: function() {
                 var self = this;
+                
+                // Show options: load from saved configs or import JSON file
+                var choice = confirm('📂 CARICA CONFIGURAZIONE\n\nOK = Carica da configurazioni salvate\nAnnulla = Importa file JSON');
+                
+                if (choice) {
+                    // Load from saved configs
+                    this.loadFromSavedConfigs();
+                } else {
+                    // Import JSON file
+                    this.importConfigFile();
+                }
+            },
+
+            loadFromSavedConfigs: function() {
+                var self = this;
                 var configs = [];
                 
                 try {
@@ -1139,15 +1221,46 @@
                 }
                 message += '\nInserisci il numero (o 0 per annullare):';
                 
-                var choice = prompt(message);
-                if (!choice || choice === '0') return;
+                var choiceNum = prompt(message);
+                if (!choiceNum || choiceNum === '0') return;
                 
-                var index = parseInt(choice) - 1;
+                var index = parseInt(choiceNum) - 1;
                 if (index < 0 || index >= configs.length) {
                     alert('❌ Scelta non valida');
                     return;
                 }
                 
+                this.loadTimersFromConfig(configs[index]);
+                alert('✅ Configurazione "' + configs[index].name + '" caricata!');
+            },
+
+            importConfigFile: function() {
+                var self = this;
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                
+                input.onchange = function(e) {
+                    var file = e.target.files[0];
+                    if (!file) return;
+                    
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            var config = JSON.parse(e.target.result);
+                            self.loadTimersFromConfig(config);
+                            alert('✅ File JSON importato!\n\n' + config.timers.length + ' timer caricati.');
+                        } catch (err) {
+                            alert('❌ Errore: file JSON non valido');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                
+                input.click();
+            },
+
+            loadTimersFromConfig: function(config) {
                 // Clear current timers
                 for (var i = 0; i < this.timers.length; i++) {
                     this.timers[i].destroy();
@@ -1155,7 +1268,6 @@
                 this.timers = [];
                 
                 // Load selected config
-                var config = configs[index];
                 for (var i = 0; i < config.timers.length; i++) {
                     var savedTimer = config.timers[i];
                     var timer = new Timer(this.timerId++);
@@ -1172,8 +1284,6 @@
                 
                 this.renderAllTimers();
                 this.saveToLocalStorage();
-                
-                alert('✅ Configurazione "' + config.name + '" caricata!');
             },
 
             addTimer: function() {
