@@ -60,12 +60,12 @@
 
         .save-load-controls {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
             margin-top: 15px;
         }
 
-        .save-btn, .load-btn {
+        .save-btn, .load-btn, .share-btn {
             background: #444;
             color: white;
             border: none;
@@ -77,8 +77,16 @@
             touch-action: manipulation;
         }
 
-        .save-btn:active, .load-btn:active {
+        .save-btn:active, .load-btn:active, .share-btn:active {
             background: #555;
+        }
+
+        .share-btn {
+            background: #2a9d8f;
+        }
+
+        .share-btn:active {
+            background: #3bb3a3;
         }
 
         .timers-container {
@@ -640,8 +648,9 @@
             <h1>⏱️ Multi Timer</h1>
             <button class="add-timer-btn" id="addTimerBtn">+ Nuovo Timer</button>
             <div class="save-load-controls">
-                <button class="save-btn" id="saveBtn">💾 Salva Config</button>
-                <button class="load-btn" id="loadBtn">📂 Carica Config</button>
+                <button class="save-btn" id="saveBtn">💾 Salva</button>
+                <button class="load-btn" id="loadBtn">📂 Carica</button>
+                <button class="share-btn" id="shareBtn">🔗 Condividi</button>
             </div>
         </div>
         
@@ -858,6 +867,10 @@
                     self.loadConfiguration();
                 });
 
+                document.getElementById('shareBtn').addEventListener('click', function() {
+                    self.shareApp();
+                });
+
                 document.getElementById('closeOverageModal').addEventListener('click', function() {
                     document.getElementById('overageModal').classList.remove('active');
                 });
@@ -945,6 +958,69 @@
 
                 document.getElementById('overageList').innerHTML = listHTML;
                 document.getElementById('overageModal').classList.add('active');
+            },
+
+            shareApp: function() {
+                var url = window.location.href;
+                var title = 'Multi Timer - DaVinci Style';
+                var text = 'Usa questa app timer professionale per i tuoi eventi!';
+
+                // Check if Web Share API is supported (mobile devices)
+                if (navigator.share) {
+                    navigator.share({
+                        title: title,
+                        text: text,
+                        url: url
+                    }).then(function() {
+                        console.log('Condivisione riuscita');
+                    }).catch(function(error) {
+                        console.log('Condivisione annullata', error);
+                    });
+                } 
+                // Fallback: copy to clipboard
+                else {
+                    var textToCopy = title + '\n' + text + '\n' + url;
+                    
+                    // Try modern clipboard API first
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(url).then(function() {
+                            alert('✅ Link copiato negli appunti!\n\n' + url + '\n\nIncollalo per condividere l\'app.');
+                        }).catch(function(err) {
+                            // Fallback to old method
+                            fallbackCopyToClipboard(url);
+                        });
+                    } else {
+                        fallbackCopyToClipboard(url);
+                    }
+                }
+
+                function fallbackCopyToClipboard(text) {
+                    var textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-9999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    try {
+                        var successful = document.execCommand('copy');
+                        if (successful) {
+                            alert('✅ Link copiato negli appunti!\n\n' + text + '\n\nIncollalo per condividere l\'app.');
+                        } else {
+                            showManualCopy(text);
+                        }
+                    } catch (err) {
+                        showManualCopy(text);
+                    }
+                    
+                    document.body.removeChild(textArea);
+                }
+
+                function showManualCopy(text) {
+                    var message = 'Copia questo link per condividere:\n\n' + text;
+                    prompt(message, text);
+                }
             },
 
             saveToLocalStorage: function() {
