@@ -885,10 +885,7 @@
                 // Try to load saved state
                 this.loadFromLocalStorage();
                 
-                // Check if there's a config in the URL (shared link)
-                var loadedFromURL = this.loadConfigFromURL();
-                
-                // If no timers loaded from URL or localStorage, add one default
+                // If no timers loaded, add one default
                 if (this.timers.length === 0) {
                     this.addTimer();
                 }
@@ -964,8 +961,6 @@
             },
 
             shareApp: function() {
-                var self = this;
-                
                 // Create configuration data
                 var config = {
                     timers: this.timers.map(function(timer) {
@@ -982,50 +977,8 @@
                     date: new Date().toISOString()
                 };
 
-                var configJSON = JSON.stringify(config);
-                var configEncoded = btoa(encodeURIComponent(configJSON));
-                
-                // Create shareable URL with configuration
-                var baseUrl = window.location.origin + window.location.pathname;
-                var shareUrl = baseUrl + '?config=' + configEncoded;
-                
-                var title = 'Multi Timer - Configurazione';
-                var text = 'Ho creato ' + this.timers.length + ' timer. Apri questo link per caricarli!';
-
-                // Check if Web Share API is supported (mobile devices)
-                if (navigator.share) {
-                    navigator.share({
-                        title: title,
-                        text: text,
-                        url: shareUrl
-                    }).then(function() {
-                        console.log('Condivisione riuscita');
-                    }).catch(function(error) {
-                        console.log('Condivisione annullata', error);
-                    });
-                } 
-                // Fallback: copy to clipboard or download
-                else {
-                    // Try to copy URL to clipboard
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(shareUrl).then(function() {
-                            var msg = '✅ Link con configurazione copiato!\n\n';
-                            msg += 'Timer inclusi: ' + self.timers.length + '\n\n';
-                            msg += 'Invia il link a chi vuoi condividere i timer.';
-                            alert(msg);
-                        }).catch(function(err) {
-                            self.downloadConfig(config);
-                        });
-                    } else {
-                        // Offer to download as JSON file
-                        var download = confirm('Vuoi scaricare la configurazione come file JSON?\n\n(Altrimenti ti verrà mostrato il link da copiare)');
-                        if (download) {
-                            self.downloadConfig(config);
-                        } else {
-                            prompt('Copia questo link per condividere i timer:', shareUrl);
-                        }
-                    }
-                }
+                // Export as JSON file
+                this.downloadConfig(config);
             },
 
             downloadConfig: function(config) {
@@ -1034,12 +987,17 @@
                 var url = URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;
-                a.download = 'timer-config-' + new Date().toISOString().split('T')[0] + '.json';
+                a.download = 'multi-timer-' + new Date().toISOString().split('T')[0] + '.json';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                alert('✅ Configurazione scaricata!\n\nPuoi inviare il file JSON e chi lo riceve può caricarlo con "📂 Carica".');
+                
+                var msg = '✅ File esportato!\n\n';
+                msg += 'Timer inclusi: ' + config.timers.length + '\n\n';
+                msg += 'Invia il file JSON tramite WhatsApp, Email, AirDrop, ecc.\n\n';
+                msg += 'Chi lo riceve può importarlo con "📂 Carica"';
+                alert(msg);
             },
 
             loadConfigFromURL: function() {
