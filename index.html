@@ -58,6 +58,29 @@
             background: #e76f51;
         }
 
+        .save-load-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .save-btn, .load-btn {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            touch-action: manipulation;
+        }
+
+        .save-btn:active, .load-btn:active {
+            background: #555;
+        }
+
         .timers-container {
             display: grid;
             gap: 15px;
@@ -317,6 +340,10 @@
         <div class="header">
             <h1>⏱️ Multi Timer</h1>
             <button class="add-timer-btn" id="addTimerBtn">+ Nuovo Timer</button>
+            <div class="save-load-controls">
+                <button class="save-btn" id="saveBtn">💾 Salva Config</button>
+                <button class="load-btn" id="loadBtn">📂 Carica Config</button>
+            </div>
         </div>
         
         <div class="timers-container" id="timersContainer"></div>
@@ -445,13 +472,178 @@
                 document.getElementById('addTimerBtn').addEventListener('click', function() {
                     self.addTimer();
                 });
-                this.addTimer();
+                
+                document.getElementById('saveBtn').addEventListener('click', function() {
+                    self.saveConfiguration();
+                });
+                
+                document.getElementById('loadBtn').addEventListener('click', function() {
+                    self.loadConfiguration();
+                });
+                
+                // Try to load saved state
+                this.loadFromLocalStorage();
+                
+                // If no timers loaded, add one default
+                if (this.timers.length === 0) {
+                    this.addTimer();
+                }
+            },
+
+            saveToLocalStorage: function() {
+                var data = {
+                    timers: this.timers.map(function(timer) {
+                        return {
+                            name: timer.name,
+                            title: timer.title,
+                            mode: timer.mode,
+                            minutes: timer.minutes,
+                            seconds: timer.seconds,
+                            targetTime: timer.targetTime
+                        };
+                    }),
+                    timerId: this.timerId
+                };
+                
+                try {
+                    localStorage.setItem('multiTimerState', JSON.stringify(data));
+                } catch (e) {
+                    console.error('Failed to save to localStorage:', e);
+                }
+            },
+
+            loadFromLocalStorage: function() {
+                try {
+                    var saved = localStorage.getItem('multiTimerState');
+                    if (!saved) return;
+                    
+                    var data = JSON.parse(saved);
+                    this.timerId = data.timerId || 0;
+                    
+                    for (var i = 0; i < data.timers.length; i++) {
+                        var savedTimer = data.timers[i];
+                        var timer = new Timer(this.timerId++);
+                        timer.name = savedTimer.name || timer.name;
+                        timer.title = savedTimer.title || '';
+                        timer.mode = savedTimer.mode || 'countdown';
+                        timer.minutes = savedTimer.minutes || 5;
+                        timer.seconds = savedTimer.seconds || 0;
+                        timer.targetTime = savedTimer.targetTime || 300;
+                        
+                        this.timers.push(timer);
+                        this.renderTimer(timer);
+                    }
+                } catch (e) {
+                    console.error('Failed to load from localStorage:', e);
+                }
+            },
+
+            saveConfiguration: function() {
+                var configs = [];
+                try {
+                    var saved = localStorage.getItem('multiTimerConfigs');
+                    if (saved) {
+                        configs = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    configs = [];
+                }
+                
+                var name = prompt('Nome della configurazione:', 'Config ' + (configs.length + 1));
+                if (!name) return;
+                
+                var config = {
+                    name: name,
+                    date: new Date().toISOString(),
+                    timers: this.timers.map(function(timer) {
+                        return {
+                            name: timer.name,
+                            title: timer.title,
+                            mode: timer.mode,
+                            minutes: timer.minutes,
+                            seconds: timer.seconds,
+                            targetTime: timer.targetTime
+                        };
+                    })
+                };
+                
+                configs.push(config);
+                
+                try {
+                    localStorage.setItem('multiTimerConfigs', JSON.stringify(configs));
+                    alert('✅ Configurazione "' + name + '" salvata!');
+                } catch (e) {
+                    alert('❌ Errore nel salvataggio: ' + e.message);
+                }
+            },
+
+            loadConfiguration: function() {
+                var self = this;
+                var configs = [];
+                
+                try {
+                    var saved = localStorage.getItem('multiTimerConfigs');
+                    if (saved) {
+                        configs = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    alert('❌ Errore nel caricamento');
+                    return;
+                }
+                
+                if (configs.length === 0) {
+                    alert('Nessuna configurazione salvata');
+                    return;
+                }
+                
+                var message = 'Scegli configurazione:\n\n';
+                for (var i = 0; i < configs.length; i++) {
+                    var date = new Date(configs[i].date);
+                    message += (i + 1) + '. ' + configs[i].name + ' (' + configs[i].timers.length + ' timer) - ' + date.toLocaleDateString() + '\n';
+                }
+                message += '\nInserisci il numero (o 0 per annullare):';
+                
+                var choice = prompt(message);
+                if (!choice || choice === '0') return;
+                
+                var index = parseInt(choice) - 1;
+                if (index < 0 || index >= configs.length) {
+                    alert('❌ Scelta non valida');
+                    return;
+                }
+                
+                // Clear current timers
+                for (var i = 0; i < this.timers.length; i++) {
+                    this.timers[i].destroy();
+                }
+                this.timers = [];
+                
+                // Load selected config
+                var config = configs[index];
+                for (var i = 0; i < config.timers.length; i++) {
+                    var savedTimer = config.timers[i];
+                    var timer = new Timer(this.timerId++);
+                    timer.name = savedTimer.name || timer.name;
+                    timer.title = savedTimer.title || '';
+                    timer.mode = savedTimer.mode || 'countdown';
+                    timer.minutes = savedTimer.minutes || 5;
+                    timer.seconds = savedTimer.seconds || 0;
+                    timer.targetTime = savedTimer.targetTime || 300;
+                    
+                    this.timers.push(timer);
+                }
+                
+                this.renderAllTimers();
+                this.saveToLocalStorage();
+                
+                alert('✅ Configurazione "' + config.name + '" caricata!');
             },
 
             addTimer: function() {
                 var timer = new Timer(this.timerId++);
                 this.timers.push(timer);
                 this.renderTimer(timer);
+                this.saveToLocalStorage();
             },
 
             duplicateTimer: function(timer) {
@@ -466,6 +658,7 @@
                 var index = this.timers.indexOf(timer);
                 this.timers.splice(index + 1, 0, newTimer);
                 this.renderAllTimers();
+                this.saveToLocalStorage();
             },
 
             deleteTimer: function(timer) {
@@ -473,6 +666,7 @@
                 var index = this.timers.indexOf(timer);
                 this.timers.splice(index, 1);
                 this.renderAllTimers();
+                this.saveToLocalStorage();
             },
 
             moveTimer: function(timer, direction) {
@@ -484,6 +678,7 @@
                 this.timers.splice(index, 1);
                 this.timers.splice(newIndex, 0, timer);
                 this.renderAllTimers();
+                this.saveToLocalStorage();
             },
 
             renderTimer: function(timer) {
@@ -526,10 +721,12 @@
 
                 card.querySelector('.timer-name').addEventListener('input', function(e) {
                     timer.name = e.target.value;
+                    self.saveToLocalStorage();
                 });
 
                 card.querySelector('.timer-title').addEventListener('input', function(e) {
                     timer.title = e.target.value;
+                    self.saveToLocalStorage();
                 });
 
                 card.querySelector('.duplicate-btn').addEventListener('click', function() {
@@ -552,20 +749,24 @@
                     timer.setMode('countdown');
                     card.querySelector('.countdown-btn').classList.add('active');
                     card.querySelector('.countup-btn').classList.remove('active');
+                    self.saveToLocalStorage();
                 });
 
                 card.querySelector('.countup-btn').addEventListener('click', function() {
                     timer.setMode('countup');
                     card.querySelector('.countup-btn').classList.add('active');
                     card.querySelector('.countdown-btn').classList.remove('active');
+                    self.saveToLocalStorage();
                 });
 
                 card.querySelector('.minutes-input').addEventListener('change', function(e) {
                     timer.setTime(parseInt(e.target.value) || 0, timer.seconds);
+                    self.saveToLocalStorage();
                 });
 
                 card.querySelector('.seconds-input').addEventListener('change', function(e) {
                     timer.setTime(timer.minutes, parseInt(e.target.value) || 0);
+                    self.saveToLocalStorage();
                 });
 
                 card.querySelector('.start-btn').addEventListener('click', function() {
